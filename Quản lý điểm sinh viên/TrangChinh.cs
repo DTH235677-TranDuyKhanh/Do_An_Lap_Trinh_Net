@@ -19,7 +19,7 @@ namespace Quản_lý_điểm_sinh_viên
 
         private void TrangChinh_Load(object sender, EventArgs e)
         {
-
+            this.WindowState = FormWindowState.Maximized;
         }
         // Khi click "Quản lý điểm sinh viên"
         private void mnuQuanLyDiemSinhVien_Click(object sender, EventArgs e)

@@ -2,6 +2,8 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
+using Excel = Microsoft.Office.Interop.Excel;
+
 
 namespace Quản_lý_điểm_sinh_viên
 {
@@ -20,6 +22,7 @@ namespace Quản_lý_điểm_sinh_viên
 
         private void DiemRenLuyen_Load(object sender, EventArgs e)
         {
+
             conn = new SqlConnection(connectionString);
             LoadHocKy(); //  Nạp danh sách học kỳ
             LoadDiemRenLuyen();
@@ -63,7 +66,7 @@ namespace Quản_lý_điểm_sinh_viên
             txtMSSV.Enabled = mo;
             txtDRL.Enabled = mo;
             cbbHocKy.Enabled = mo;
-            txtXepLoai.Enabled = false; // Xếp loại tự động, không cho nhập tay
+            txtXepLoai.Enabled = mo; // Xếp loại tự động, không cho nhập tay
             btnLuu.Enabled = mo;
             btnHuy.Enabled = mo;
         }
@@ -200,5 +203,90 @@ namespace Quản_lý_điểm_sinh_viên
                 txtXepLoai.Text = "";
             }
         }
+
+        private void btnXuat_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Kiểm tra DataGridView
+                if (dgvDiemRenLuyen.Rows.Count == 0)
+                {
+                    MessageBox.Show("Không có dữ liệu để xuất!");
+                    return;
+                }
+
+                // Tạo Excel
+                Excel.Application excel = new Excel.Application();
+                Excel.Workbook workbook = excel.Workbooks.Add(Type.Missing);
+                Excel.Worksheet worksheet = workbook.ActiveSheet;
+                worksheet.Name = "DiemRenLuyen";
+
+                // Ghi tiêu đề cột
+                for (int i = 1; i <= dgvDiemRenLuyen.Columns.Count; i++)
+                {
+                    worksheet.Cells[1, i] = dgvDiemRenLuyen.Columns[i - 1].HeaderText;
+                }
+
+                // Ghi dữ liệu từng dòng
+                for (int i = 0; i < dgvDiemRenLuyen.Rows.Count; i++)
+                {
+                    for (int j = 0; j < dgvDiemRenLuyen.Columns.Count; j++)
+                    {
+                        worksheet.Cells[i + 2, j + 1] = dgvDiemRenLuyen.Rows[i].Cells[j].Value?.ToString();
+                    }
+                }
+
+                // Tự động căn chỉnh
+                worksheet.Columns.AutoFit();
+
+                // Hiện dialog lưu file
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.Title = "Lưu file Excel";
+                saveFileDialog.Filter = "Excel File (*.xlsx)|*.xlsx|All Files (*.*)|*.*";
+                saveFileDialog.FileName = "DiemRenLuyen.xlsx";
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    workbook.SaveAs(saveFileDialog.FileName);
+                    workbook.Close();
+                    excel.Quit();
+
+                    MessageBox.Show("Xuất file Excel thành công!");
+                }
+                else
+                {
+                    workbook.Close();
+                    excel.Quit();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi khi xuất Excel: " + ex.Message);
+            }
+        }
+        private void btnTimKiem_Click(object sender, EventArgs e)
+        {
+            string xepLoai = txtXepLoai.Text.Trim(); // hoặc txtTimKiemXepLoai.Text
+
+            if (xepLoai == "")
+            {
+                MessageBox.Show("Vui lòng nhập xếp loại cần tìm!");
+                return;
+            }
+
+            string sql = "SELECT * FROM DiemRenLuyen WHERE XepLoai LIKE @XepLoai";
+
+            da = new SqlDataAdapter(sql, conn);
+            da.SelectCommand.Parameters.AddWithValue("@XepLoai", "%" + xepLoai + "%");
+
+            dt = new DataTable();
+            da.Fill(dt);
+
+            dgvDiemRenLuyen.DataSource = dt;
+
+            if (dt.Rows.Count == 0)
+                MessageBox.Show("Không tìm thấy kết quả!");
+        }
+
     }
 }
