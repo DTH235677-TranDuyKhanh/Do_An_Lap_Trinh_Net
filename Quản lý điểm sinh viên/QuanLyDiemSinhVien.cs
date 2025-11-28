@@ -2,6 +2,9 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
+using Excel = Microsoft.Office.Interop.Excel;
+
+
 
 namespace Quản_lý_điểm_sinh_viên
 {
